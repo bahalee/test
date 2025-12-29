@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo API - Mini Test Technique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .endpoint {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+        
+        .get { background: #d4edda; color: #155724; }
+        .post { background: #d1ecf1; color: #0c5460; }
+        
+        .test-area {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button.secondary {
+            background: #6c757d;
+        }
+        
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 0.8em;
+        }
+        
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> Todo API</h1>
+            <p class="subtitle">Mini Test Technique - Backend Spring Boot</p>
+        </header>
+        
+        <div class="content">
+            <div class="section">
+                <h2> API Endpoints</h2>
+                
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <strong>/api/todos</strong>
+                    <span class="status success">200 OK</span>
+                    <p>Retourne la liste complète des tâches</p>
+                </div>
+                
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <strong>/api/todos</strong>
+                    <span class="status success">201 Created</span>
+                    <p>Ajoute une nouvelle tâche</p>
+                    <p><small>Body: {"title": "Votre tâche"}</small></p>
+                </div>
+                
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <strong>/api/todos/count</strong>
+                    <span class="status success">200 OK</span>
+                    <p>Retourne le nombre de tâches</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2> Tester l'API</h2>
+                
+                <div class="test-area">
+                    <h3>Récupérer les tâches</h3>
+                    <button onclick="fetchTodos()">GET /api/todos</button>
+                    
+                    <h3>Ajouter une tâche</h3>
+                    <input type="text" id="todoInput" placeholder="Entrez le titre de la tâche...">
+                    <button onclick="addTodo()">POST /api/todos</button>
+                    
+                    <h3>Résultat :</h3>
+                    <pre id="result">Cliquez sur un bouton pour tester...</pre>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Mini Test Technique - Fullstack + Git | Spring Boot Backend</p>
+        </footer>
+    </div>
+
+    <script>
+        const resultElement = document.getElementById('result');
+        
+        async function fetchTodos() {
+            try {
+                showLoading();
+                const response = await fetch('/api/todos');
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                displayResult({ error: error.message }, true);
+            }
+        }
+        
+        async function addTodo() {
+            const input = document.getElementById('todoInput');
+            const title = input.value.trim();
+            
+            if (!title) {
+                alert('Veuillez entrer un titre');
+                return;
+            }
+            
+            try {
+                showLoading();
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                });
+                
+                const data = await response.json();
+                displayResult(data);
+                input.value = '';
+                fetchTodos(); // Rafraîchir la liste
+            } catch (error) {
+                displayResult({ error: error.message }, true);
+            }
+        }
+        
+        function displayResult(data, isError = false) {
+            resultElement.innerHTML = isError 
+                ? `<span style="color: #dc3545">❌ Erreur:</span>\n${JSON.stringify(data, null, 2)}`
+                : `<span style="color: #28a745">✅ Succès:</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+        
+        function showLoading() {
+            resultElement.innerHTML = '<span style="color: #6c757d">⏳ Chargement...</span>';
+        }
+        
+        // Charger les tâches au démarrage
+        fetchTodos();
+    </script>
+</body>
+</html>
