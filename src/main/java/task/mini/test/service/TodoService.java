@@ -15,14 +15,8 @@ public class TodoService {
 
     public TodoService() {
         // Données initiales
-        initializeSampleData();
-    }
-
-    private void initializeSampleData() {
-        addTodo("Apprendre Spring Boot");
-        addTodo("Créer une API REST");
-        addTodo("Tester avec Postman");
-        addTodo("Ajouter les opérations CRUD");
+        todos.add(new Todo(counter.getAndIncrement(), "Apprendre Spring Boot"));
+        todos.add(new Todo(counter.getAndIncrement(), "Créer une API REST"));
     }
 
     public List<Todo> getAllTodos() {
@@ -36,22 +30,13 @@ public class TodoService {
     }
 
     public Todo addTodo(String title) {
-        validateTitle(title);
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Le titre est obligatoire");
+        }
         
         Todo newTodo = new Todo(counter.getAndIncrement(), title.trim());
         todos.add(newTodo);
         return newTodo;
-    }
-
-    // Surcharge pour accepter un objet Todo
-    public Todo addTodo(Todo todo) {
-        validateTitle(todo.getTitle());
-        
-        if (todo.getId() == null) {
-            todo.setId(counter.getAndIncrement());
-        }
-        todos.add(todo);
-        return todo;
     }
 
     public Optional<Todo> updateTodo(Long id, String title, Boolean completed) {
@@ -80,11 +65,5 @@ public class TodoService {
 
     public int getTodoCount() {
         return todos.size();
-    }
-
-    private void validateTitle(String title) {
-        if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le titre de la tâche est obligatoire");
-        }
     }
 }
