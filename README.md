@@ -11,11 +11,15 @@ Application Spring Boot simple développée pour un test technique en 30 minutes
 -  Configuration CORS pour le frontend
 
 ## API Endpoints
+### Endpoints CRUD Complets
 
-| Méthode | URL | Description |
-|---------|-----|-------------|
-| **GET** |  | Récupère toutes les tâches |
-| **POST** |  | Ajoute une nouvelle tâche |
+| Méthode | URL | Description | Body |
+|---------|-----|-------------|------|
+| **GET** | `/api/todos` | Liste toutes les tâches | - |
+| **GET** | `/api/todos/{id}` | Récupère une tâche spécifique | - |
+| **POST** | `/api/todos` | Ajoute une nouvelle tâche | `{"title": "Tâche"}` |
+| **PUT** | `/api/todos/{id}` | Met à jour une tâche | `{"title": "Nouveau", "completed": true}` |
+| **DELETE** | `/api/todos/{id}` | Supprime une tâche | - |
 
 ## 🛠️ Technologies utilisées
 
