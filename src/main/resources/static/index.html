@@ -350,234 +350,436 @@
     </div>
 
     <script>
-        const resultElement = document.getElementById('result');
-        const todosListElement = document.getElementById('todosList');
-        const todoCountElement = document.getElementById('todoCount');
+    // Éléments DOM
+    const resultElement = document.getElementById('result');
+    const todosListElement = document.getElementById('todosList');
+    const todoCountElement = document.getElementById('todoCount');
+    const notificationElement = document.getElementById('notification');
+    
+    // Variables globales pour le débogage
+    window.debug = {
+        lastRequest: null,
+        lastResponse: null,
+        showDetails: function() {
+            console.log('Dernière requête:', this.lastRequest);
+            console.log('Dernière réponse:', this.lastResponse);
+        }
+    };
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Application initialisée');
+        fetchTodos();
+        getTodoCount();
+    });
+    
+    // ===== FONCTIONS API AMÉLIORÉES =====
+    
+    async function fetchTodos() {
+        try {
+            console.log('Récupération des tâches...');
+            showLoading('Chargement des tâches...');
+            
+            const response = await fetch('/api/todos');
+            console.log('Réponse GET /api/todos:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Données reçues:', data);
+            
+            displayResult({ message: `${data.length} tâches chargées`, data: data });
+            displayTodosList(data);
+            updateStatistics(data);
+            showNotification('Liste mise à jour', 'success');
+            
+        } catch (error) {
+            console.error('Erreur fetchTodos:', error);
+            displayResult({ 
+                error: error.message,
+                suggestion: "Vérifiez que le serveur Spring Boot est démarré sur le port 8080"
+            }, true);
+            showNotification('Erreur de connexion au serveur', 'error');
+        }
+    }
+    
+    async function updateTodo() {
+        const id = document.getElementById('todoId').value;
+        const title = document.getElementById('updateTitle').value.trim();
+        const completed = document.getElementById('updateCompleted').checked;
         
-        // Charger les données au démarrage
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchTodos();
-            getTodoCount();
-        });
+        if (!id) {
+            showNotification('Veuillez entrer un ID', 'error');
+            return;
+        }
         
-        // Afficher/masquer le formulaire d'ajout
-        function showAddForm() {
-            const form = document.getElementById('addForm');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        // Préparer les données
+        const updates = {};
+        if (title) updates.title = title;
+        updates.completed = completed;
+        
+        console.log('Mise à jour tâche #' + id, updates);
+        
+        try {
+            showLoading(`Mise à jour de la tâche #${id}...`);
+            
+            // Sauvegarder pour débogage
+            window.debug.lastRequest = {
+                method: 'PUT',
+                url: `/api/todos/${id}`,
+                data: updates
+            };
+            
+            const response = await fetch(`/api/todos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(updates)
+            });
+            
+            console.log('Réponse PUT:', response.status, response.statusText);
+            window.debug.lastResponse = {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            };
+            
+            if (response.status === 404) {
+                throw new Error(`La tâche #${id} n'existe pas`);
+            }
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Erreur détaillée:', errorText);
+                throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Tâche mise à jour:', data);
+            
+            displayResult({ 
+                message: `Tâche #${id} mise à jour avec succès`,
+                data: data 
+            });
+            
+            // Réinitialiser le formulaire
+            document.getElementById('updateTitle').value = '';
+            document.getElementById('updateCompleted').checked = false;
             document.getElementById('updateForm').style.display = 'none';
-        }
-        
-        // Afficher/masquer le formulaire de modification
-        function showUpdateForm() {
-            const id = document.getElementById('todoId').value;
-            if (!id) {
-                alert('Veuillez entrer un ID');
-                return;
-            }
             
-            const form = document.getElementById('updateForm');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-            document.getElementById('addForm').style.display = 'none';
-        }
-        
-        // Récupérer toutes les tâches
-        async function fetchTodos() {
-            try {
-                showLoading();
-                const response = await fetch('/api/todos');
-                const data = await response.json();
-                displayResult(data);
-                displayTodosList(data);
-            } catch (error) {
-                displayResult({ error: error.message }, true);
-            }
-        }
-        
-        // Récupérer une tâche par ID
-        async function getTodoById() {
-            const id = document.getElementById('todoId').value;
-            if (!id) {
-                alert('Veuillez entrer un ID');
-                return;
-            }
-            
-            try {
-                showLoading();
-                const response = await fetch(`/api/todos/${id}`);
-                const data = await response.json();
-                displayResult(data);
-                fetchTodos(); // Rafraîchir la liste
-            } catch (error) {
-                displayResult({ error: error.message }, true);
-            }
-        }
-        
-        // Ajouter une tâche
-        async function addTodo() {
-            const input = document.getElementById('todoInput');
-            const title = input.value.trim();
-            
-            if (!title) {
-                alert('Veuillez entrer un titre');
-                return;
-            }
-            
-            try {
-                showLoading();
-                const response = await fetch('/api/todos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ title })
-                });
-                
-                const data = await response.json();
-                displayResult(data);
-                input.value = '';
-                fetchTodos(); // Rafraîchir la liste
-                getTodoCount(); // Rafraîchir les stats
-            } catch (error) {
-                displayResult({ error: error.message }, true);
-            }
-        }
-        
-        // Modifier une tâche
-        async function updateTodo() {
-            const id = document.getElementById('todoId').value;
-            const title = document.getElementById('updateTitle').value.trim();
-            const completed = document.getElementById('updateCompleted').checked;
-            
-            if (!id) {
-                alert('Veuillez entrer un ID');
-                return;
-            }
-            
-            const updates = {};
-            if (title) updates.title = title;
-            updates.completed = completed;
-            
-            try {
-                showLoading();
-                const response = await fetch(`/api/todos/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(updates)
-                });
-                
-                const data = await response.json();
-                displayResult(data);
-                document.getElementById('updateTitle').value = '';
-                document.getElementById('updateCompleted').checked = false;
-                fetchTodos(); // Rafraîchir la liste
-                getTodoCount(); // Rafraîchir les stats
-            } catch (error) {
-                displayResult({ error: error.message }, true);
-            }
-        }
-        
-        // Supprimer une tâche
-        async function deleteTodo() {
-            const id = document.getElementById('todoId').value;
-            if (!id) {
-                alert('Veuillez entrer un ID');
-                return;
-            }
-            
-            if (!confirm(`Voulez-vous vraiment supprimer la tâche #${id} ?`)) {
-                return;
-            }
-            
-            try {
-                showLoading();
-                const response = await fetch(`/api/todos/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                const data = await response.json();
-                displayResult(data);
-                fetchTodos(); // Rafraîchir la liste
-                getTodoCount(); // Rafraîchir les stats
-            } catch (error) {
-                displayResult({ error: error.message }, true);
-            }
-        }
-        
-        // Récupérer le nombre de tâches
-        async function getTodoCount() {
-            try {
-                const response = await fetch('/api/todos/count');
-                const data = await response.json();
-                todoCountElement.textContent = data.count;
-            } catch (error) {
-                console.error('Erreur:', error);
-            }
-        }
-        
-        // Afficher la liste des tâches
-        function displayTodosList(todos) {
-            if (!todos || todos.length === 0) {
-                todosListElement.innerHTML = '<div class="todo-item">Aucune tâche</div>';
-                return;
-            }
-            
-            todosListElement.innerHTML = todos.map(todo => `
-                <div class="todo-item">
-                    <div class="todo-info">
-                        <div class="todo-id">#${todo.id}</div>
-                        <div class="todo-title">${todo.title}</div>
-                        <div class="${todo.completed ? 'todo-completed' : 'todo-not-completed'}">
-                            ${todo.completed ? '✅ Terminée' : '⏳ En cours'}
-                        </div>
-                    </div>
-                    <div class="todo-actions">
-                        <button class="action-btn put-btn" onclick="setTodoId(${todo.id})">Modifier</button>
-                        <button class="action-btn delete-btn" onclick="confirmDelete(${todo.id})">Supprimer</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        // Remplir automatiquement l'ID
-        function setTodoId(id) {
-            document.getElementById('todoId').value = id;
-            showUpdateForm();
-        }
-        
-        // Confirmer la suppression
-        async function confirmDelete(id) {
-            if (!confirm(`Voulez-vous vraiment supprimer la tâche #${id} ?`)) {
-                return;
-            }
-            
-            try {
-                showLoading();
-                const response = await fetch(`/api/todos/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                const data = await response.json();
-                displayResult(data);
+            // Rafraîchir les données
+            setTimeout(() => {
                 fetchTodos();
                 getTodoCount();
-            } catch (error) {
-                displayResult({ error: error.message }, true);
+            }, 500);
+            
+            showNotification(`Tâche #${id} mise à jour`, 'success');
+            
+        } catch (error) {
+            console.error('Erreur updateTodo:', error);
+            displayResult({ 
+                error: error.message,
+                id: id,
+                updates: updates
+            }, true);
+            showNotification(error.message, 'error');
+        }
+    }
+    
+    async function deleteTodo() {
+        const id = document.getElementById('todoId').value;
+        
+        if (!id) {
+            showNotification('Veuillez entrer un ID', 'error');
+            return;
+        }
+        
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer la tâche #${id} ?`)) {
+            return;
+        }
+        
+        console.log('Suppression tâche #' + id);
+        
+        try {
+            showLoading(`Suppression de la tâche #${id}...`);
+            
+            // Sauvegarder pour débogage
+            window.debug.lastRequest = {
+                method: 'DELETE',
+                url: `/api/todos/${id}`
+            };
+            
+            const response = await fetch(`/api/todos/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            console.log('Réponse DELETE:', response.status, response.statusText);
+            window.debug.lastResponse = {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            };
+            
+            if (response.status === 404) {
+                throw new Error(`La tâche #${id} n'existe pas`);
             }
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Erreur détaillée:', errorText);
+                throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Tâche supprimée:', data);
+            
+            displayResult({ 
+                message: `Tâche #${id} supprimée avec succès`,
+                data: data 
+            });
+            
+            // Réinitialiser et cacher le formulaire
+            document.getElementById('todoId').value = '';
+            document.getElementById('deleteForm').style.display = 'none';
+            
+            // Rafraîchir les données
+            setTimeout(() => {
+                fetchTodos();
+                getTodoCount();
+            }, 500);
+            
+            showNotification(`Tâche #${id} supprimée`, 'success');
+            
+        } catch (error) {
+            console.error('Erreur deleteTodo:', error);
+            displayResult({ 
+                error: error.message,
+                id: id
+            }, true);
+            showNotification(error.message, 'error');
+        }
+    }
+    
+    // ===== FONCTIONS UTILITAIRES =====
+    
+    function displayTodosList(todos) {
+        if (!todos || todos.length === 0) {
+            todosListElement.innerHTML = `
+                <div class="todo-item" style="text-align: center; color: #6c757d;">
+                    📭 Aucune tâche pour le moment
+                </div>
+            `;
+            return;
         }
         
-        // Afficher le résultat
-        function displayResult(data, isError = false) {
-            resultElement.innerHTML = isError 
-                ? `<span style="color: #dc3545">❌ Erreur:</span>\n${JSON.stringify(data, null, 2)}`
-                : `<span style="color: #28a745">✅ Succès:</span>\n${JSON.stringify(data, null, 2)}`;
+        // Échapper les apostrophes dans les titres pour JavaScript
+        const escapeForJS = (str) => str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        
+        todosListElement.innerHTML = todos.map(todo => `
+            <div class="todo-item" id="todo-${todo.id}">
+                <div class="todo-info">
+                    <div class="todo-id">ID: ${todo.id}</div>
+                    <div class="todo-title">${todo.title}</div>
+                    <span class="todo-status ${todo.completed ? 'todo-completed' : 'todo-not-completed'}">
+                        ${todo.completed ? '✅ Terminée' : '⏳ En cours'}
+                    </span>
+                </div>
+                <div class="todo-actions">
+                    <button class="action-btn put-btn" onclick="quickEdit(${todo.id})">
+                        ✏️
+                    </button>
+                    <button class="action-btn delete-btn" onclick="quickDelete(${todo.id})">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Fonctions d'actions rapides
+    function quickEdit(id) {
+        // Trouver la tâche dans la liste actuelle
+        fetch(`/api/todos/${id}`)
+            .then(response => response.json())
+            .then(todo => {
+                document.getElementById('todoId').value = id;
+                document.getElementById('updateTitle').value = todo.title || '';
+                document.getElementById('updateCompleted').checked = todo.completed || false;
+                
+                // Afficher les formulaires
+                document.getElementById('manageForm').style.display = 'block';
+                document.getElementById('updateForm').style.display = 'block';
+                document.getElementById('deleteForm').style.display = 'none';
+                document.getElementById('addForm').style.display = 'none';
+                
+                showNotification(`Prêt à modifier la tâche #${id}`, 'success');
+            })
+            .catch(error => {
+                console.error('Erreur quickEdit:', error);
+                showNotification(`Erreur: ${error.message}`, 'error');
+            });
+    }
+    
+    async function quickDelete(id) {
+        if (!confirm(`Supprimer la tâche #${id} ?`)) return;
+        
+        try {
+            const response = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+            
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}`);
+            }
+            
+            // Mettre à jour l'interface
+            const todoElement = document.getElementById(`todo-${id}`);
+            if (todoElement) {
+                todoElement.style.opacity = '0.5';
+                todoElement.style.textDecoration = 'line-through';
+                setTimeout(() => {
+                    fetchTodos();
+                    getTodoCount();
+                }, 300);
+            }
+            
+            showNotification(`Tâche #${id} supprimée`, 'success');
+            displayResult({ message: `Tâche #${id} supprimée avec succès` });
+            
+        } catch (error) {
+            console.error('Erreur quickDelete:', error);
+            showNotification(`Erreur: ${error.message}`, 'error');
+        }
+    }
+    
+    function updateStatistics(todos) {
+        if (!todos) return;
+        const completed = todos.filter(t => t.completed).length;
+        const pending = todos.length - completed;
+        
+        // Mettre à jour l'affichage
+        const statsElement = document.querySelector('#stats');
+        if (statsElement) {
+            statsElement.innerHTML = `
+                <p>Total: <strong>${todos.length}</strong> tâches</p>
+                <p>Terminées: <strong>${completed}</strong> tâches</p>
+                <p>En cours: <strong>${pending}</strong> tâches</p>
+            `;
+        }
+    }
+    
+    function getTodoCount() {
+        fetch('/api/todos/count')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Count:', data);
+                if (todoCountElement) {
+                    todoCountElement.textContent = data.count || 0;
+                }
+            })
+            .catch(error => console.error('Erreur getTodoCount:', error));
+    }
+    
+    function displayResult(data, isError = false) {
+        const timestamp = new Date().toLocaleTimeString();
+        const status = isError ? '❌ Erreur' : '✅ Succès';
+        
+        resultElement.innerHTML = `
+            <div style="margin-bottom: 10px; color: ${isError ? '#dc3545' : '#28a745'}; font-weight: bold;">
+                ${status} - ${timestamp}
+            </div>
+            <pre style="background: ${isError ? '#2d1f1f' : '#1f2d1f'}; padding: 10px; border-radius: 5px;">
+${JSON.stringify(data, null, 2)}
+            </pre>
+        `;
+    }
+    
+    function showLoading(message = 'Chargement...') {
+        resultElement.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #6c757d;">
+                <div style="margin-bottom: 10px;">⏳ ${message}</div>
+                <div style="font-size: 0.9em;">Veuillez patienter...</div>
+            </div>
+        `;
+    }
+    
+    function showNotification(message, type = 'success') {
+        // Créer ou réutiliser l'élément de notification
+        let notif = document.getElementById('notification');
+        if (!notif) {
+            notif = document.createElement('div');
+            notif.id = 'notification';
+            notif.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 6px;
+                color: white;
+                z-index: 1000;
+                display: none;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            document.body.appendChild(notif);
         }
         
-        // Afficher le chargement
-        function showLoading() {
-            resultElement.innerHTML = '<span style="color: #6c757d">⏳ Chargement...</span>';
-        }
-    </script>
+        notif.textContent = message;
+        notif.style.background = type === 'success' ? '#28a745' : '#dc3545';
+        notif.style.display = 'block';
+        
+        setTimeout(() => {
+            notif.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Fonctions d'affichage/masquage des formulaires
+    function showAddForm() {
+        document.getElementById('addForm').style.display = 'block';
+        document.getElementById('manageForm').style.display = 'none';
+    }
+    
+    function showGetByIdForm() {
+        document.getElementById('manageForm').style.display = 'block';
+        document.getElementById('addForm').style.display = 'none';
+        document.getElementById('updateForm').style.display = 'none';
+        document.getElementById('deleteForm').style.display = 'none';
+    }
+    
+    // Fonction de débogage accessible depuis la console
+    window.debugAPI = function() {
+        console.log('=== DEBUG API ===');
+        console.log('Dernière requête:', window.debug.lastRequest);
+        console.log('Dernière réponse:', window.debug.lastResponse);
+        console.log('URL base:', window.location.origin);
+        
+        // Tester directement l'API
+        fetch('/api/todos')
+            .then(r => console.log('Test GET /api/todos:', r.status))
+            .catch(e => console.error('Erreur test:', e));
+    };
+    
+    // Fonction pour tester manuellement
+    window.testUpdate = function(id, title, completed) {
+        const updates = { title: title || 'Test', completed: completed || true };
+        console.log('Test UPDATE #' + id, updates);
+        
+        fetch(`/api/todos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        })
+        .then(r => {
+            console.log('Status:', r.status);
+            return r.json();
+        })
+        .then(data => console.log('Réponse:', data))
+        .catch(e => console.error('Erreur:', e));
+    };
+</script>
 </body>
 </html>
