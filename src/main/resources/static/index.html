@@ -21,7 +21,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 40px auto;
             background: white;
             border-radius: 12px;
@@ -48,6 +48,9 @@
         
         .content {
             padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
         }
         
         .section {
@@ -86,6 +89,8 @@
         
         .get { background: #d4edda; color: #155724; }
         .post { background: #d1ecf1; color: #0c5460; }
+        .put { background: #fff3cd; color: #856404; }
+        .delete { background: #f8d7da; color: #721c24; }
         
         .test-area {
             background: white;
@@ -95,7 +100,7 @@
             margin-top: 20px;
         }
         
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -105,7 +110,7 @@
             transition: border-color 0.3s;
         }
         
-        input[type="text"]:focus {
+        input[type="text"]:focus, input[type="number"]:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -114,9 +119,9 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             margin: 5px;
@@ -127,8 +132,21 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         
-        button.secondary {
-            background: #6c757d;
+        button.get-btn { background: #28a745; }
+        button.post-btn { background: #17a2b8; }
+        button.put-btn { background: #ffc107; color: #212529; }
+        button.delete-btn { background: #dc3545; }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
         }
         
         pre {
@@ -139,10 +157,12 @@
             overflow-x: auto;
             margin-top: 15px;
             font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
         }
         
         .status {
-            padding: 8px 12px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
             margin-left: 10px;
@@ -158,79 +178,241 @@
             background: #f8f9fa;
             color: #666;
             border-top: 1px solid #e0e0e0;
+            grid-column: 1 / -1;
+        }
+        
+        .todos-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+        }
+        
+        .todo-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .todo-info {
+            flex: 1;
+        }
+        
+        .todo-id {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .todo-title {
+            margin: 5px 0;
+        }
+        
+        .todo-completed {
+            color: #28a745;
+            font-size: 0.9em;
+        }
+        
+        .todo-not-completed {
+            color: #dc3545;
+            font-size: 0.9em;
+        }
+        
+        .todo-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1> Todo API</h1>
+            <h1>✅ Todo API</h1>
             <p class="subtitle">Mini Test Technique - Backend Spring Boot</p>
         </header>
         
         <div class="content">
-            <div class="section">
-                <h2> API Endpoints</h2>
-                
-                <div class="endpoint">
-                    <span class="method get">GET</span>
-                    <strong>/api/todos</strong>
-                    <span class="status success">200 OK</span>
-                    <p>Retourne la liste complète des tâches</p>
+            <div>
+                <div class="section">
+                    <h2>📡 API Endpoints</h2>
+                    
+                    <div class="endpoint">
+                        <span class="method get">GET</span>
+                        <strong>/api/todos</strong>
+                        <span class="status success">200 OK</span>
+                        <p>Retourne la liste complète des tâches</p>
+                    </div>
+                    
+                    <div class="endpoint">
+                        <span class="method get">GET</span>
+                        <strong>/api/todos/{id}</strong>
+                        <span class="status success">200 OK</span>
+                        <p>Retourne une tâche spécifique</p>
+                    </div>
+                    
+                    <div class="endpoint">
+                        <span class="method post">POST</span>
+                        <strong>/api/todos</strong>
+                        <span class="status success">201 Created</span>
+                        <p>Ajoute une nouvelle tâche</p>
+                        <p><small>Body: {"title": "Votre tâche"}</small></p>
+                    </div>
+                    
+                    <div class="endpoint">
+                        <span class="method put">PUT</span>
+                        <strong>/api/todos/{id}</strong>
+                        <span class="status success">200 OK</span>
+                        <p>Met à jour une tâche</p>
+                        <p><small>Body: {"title": "Nouveau titre", "completed": true}</small></p>
+                    </div>
+                    
+                    <div class="endpoint">
+                        <span class="method delete">DELETE</span>
+                        <strong>/api/todos/{id}</strong>
+                        <span class="status success">200 OK</span>
+                        <p>Supprime une tâche</p>
+                    </div>
                 </div>
                 
-                <div class="endpoint">
-                    <span class="method post">POST</span>
-                    <strong>/api/todos</strong>
-                    <span class="status success">201 Created</span>
-                    <p>Ajoute une nouvelle tâche</p>
-                    <p><small>Body: {"title": "Votre tâche"}</small></p>
-                </div>
-                
-                <div class="endpoint">
-                    <span class="method get">GET</span>
-                    <strong>/api/todos/count</strong>
-                    <span class="status success">200 OK</span>
-                    <p>Retourne le nombre de tâches</p>
+                <div class="section">
+                    <h2>🧪 Tester l'API</h2>
+                    
+                    <div class="test-area">
+                        <h3>Opérations CRUD</h3>
+                        
+                        <div>
+                            <button class="get-btn" onclick="fetchTodos()">GET /api/todos</button>
+                            <button class="post-btn" onclick="showAddForm()">➕ Ajouter</button>
+                        </div>
+                        
+                        <div id="addForm" style="display: none; margin-top: 15px;">
+                            <input type="text" id="todoInput" placeholder="Titre de la tâche...">
+                            <button class="post-btn" onclick="addTodo()">POST /api/todos</button>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <input type="number" id="todoId" placeholder="ID de la tâche" style="width: 100px;">
+                            <button class="get-btn" onclick="getTodoById()">GET /api/todos/{id}</button>
+                            <button class="put-btn" onclick="showUpdateForm()">✏️ Modifier</button>
+                            <button class="delete-btn" onclick="deleteTodo()">🗑️ Supprimer</button>
+                        </div>
+                        
+                        <div id="updateForm" style="display: none; margin-top: 15px;">
+                            <input type="text" id="updateTitle" placeholder="Nouveau titre...">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="updateCompleted">
+                                <label for="updateCompleted">Terminée</label>
+                            </div>
+                            <button class="put-btn" onclick="updateTodo()">PUT /api/todos/{id}</button>
+                        </div>
+                        
+                        <h3>Résultat :</h3>
+                        <pre id="result">Cliquez sur un bouton pour tester...</pre>
+                    </div>
                 </div>
             </div>
             
-            <div class="section">
-                <h2> Tester l'API</h2>
+            <div>
+                <div class="section">
+                    <h2>📝 Liste des Tâches</h2>
+                    <div id="todosList" class="todos-list">
+                        Chargement...
+                    </div>
+                </div>
                 
-                <div class="test-area">
-                    <h3>Récupérer les tâches</h3>
-                    <button onclick="fetchTodos()">GET /api/todos</button>
-                    
-                    <h3>Ajouter une tâche</h3>
-                    <input type="text" id="todoInput" placeholder="Entrez le titre de la tâche...">
-                    <button onclick="addTodo()">POST /api/todos</button>
-                    
-                    <h3>Résultat :</h3>
-                    <pre id="result">Cliquez sur un bouton pour tester...</pre>
+                <div class="section">
+                    <h2>📊 Statistiques</h2>
+                    <div class="test-area">
+                        <button onclick="getTodoCount()">GET /api/todos/count</button>
+                        <div id="stats" style="margin-top: 15px;">
+                            <p>Total: <span id="todoCount">0</span> tâches</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         
         <footer>
-            <p>Mini Test Technique - Fullstack + Git | Spring Boot Backend</p>
+            <p>Mini Test Technique - Fullstack + Git | Spring Boot Backend avec CRUD complet</p>
         </footer>
     </div>
 
     <script>
         const resultElement = document.getElementById('result');
+        const todosListElement = document.getElementById('todosList');
+        const todoCountElement = document.getElementById('todoCount');
         
+        // Charger les données au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchTodos();
+            getTodoCount();
+        });
+        
+        // Afficher/masquer le formulaire d'ajout
+        function showAddForm() {
+            const form = document.getElementById('addForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            document.getElementById('updateForm').style.display = 'none';
+        }
+        
+        // Afficher/masquer le formulaire de modification
+        function showUpdateForm() {
+            const id = document.getElementById('todoId').value;
+            if (!id) {
+                alert('Veuillez entrer un ID');
+                return;
+            }
+            
+            const form = document.getElementById('updateForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            document.getElementById('addForm').style.display = 'none';
+        }
+        
+        // Récupérer toutes les tâches
         async function fetchTodos() {
             try {
                 showLoading();
                 const response = await fetch('/api/todos');
                 const data = await response.json();
                 displayResult(data);
+                displayTodosList(data);
             } catch (error) {
                 displayResult({ error: error.message }, true);
             }
         }
         
+        // Récupérer une tâche par ID
+        async function getTodoById() {
+            const id = document.getElementById('todoId').value;
+            if (!id) {
+                alert('Veuillez entrer un ID');
+                return;
+            }
+            
+            try {
+                showLoading();
+                const response = await fetch(`/api/todos/${id}`);
+                const data = await response.json();
+                displayResult(data);
+                fetchTodos(); // Rafraîchir la liste
+            } catch (error) {
+                displayResult({ error: error.message }, true);
+            }
+        }
+        
+        // Ajouter une tâche
         async function addTodo() {
             const input = document.getElementById('todoInput');
             const title = input.value.trim();
@@ -254,23 +436,148 @@
                 displayResult(data);
                 input.value = '';
                 fetchTodos(); // Rafraîchir la liste
+                getTodoCount(); // Rafraîchir les stats
             } catch (error) {
                 displayResult({ error: error.message }, true);
             }
         }
         
+        // Modifier une tâche
+        async function updateTodo() {
+            const id = document.getElementById('todoId').value;
+            const title = document.getElementById('updateTitle').value.trim();
+            const completed = document.getElementById('updateCompleted').checked;
+            
+            if (!id) {
+                alert('Veuillez entrer un ID');
+                return;
+            }
+            
+            const updates = {};
+            if (title) updates.title = title;
+            updates.completed = completed;
+            
+            try {
+                showLoading();
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updates)
+                });
+                
+                const data = await response.json();
+                displayResult(data);
+                document.getElementById('updateTitle').value = '';
+                document.getElementById('updateCompleted').checked = false;
+                fetchTodos(); // Rafraîchir la liste
+                getTodoCount(); // Rafraîchir les stats
+            } catch (error) {
+                displayResult({ error: error.message }, true);
+            }
+        }
+        
+        // Supprimer une tâche
+        async function deleteTodo() {
+            const id = document.getElementById('todoId').value;
+            if (!id) {
+                alert('Veuillez entrer un ID');
+                return;
+            }
+            
+            if (!confirm(`Voulez-vous vraiment supprimer la tâche #${id} ?`)) {
+                return;
+            }
+            
+            try {
+                showLoading();
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                displayResult(data);
+                fetchTodos(); // Rafraîchir la liste
+                getTodoCount(); // Rafraîchir les stats
+            } catch (error) {
+                displayResult({ error: error.message }, true);
+            }
+        }
+        
+        // Récupérer le nombre de tâches
+        async function getTodoCount() {
+            try {
+                const response = await fetch('/api/todos/count');
+                const data = await response.json();
+                todoCountElement.textContent = data.count;
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+        
+        // Afficher la liste des tâches
+        function displayTodosList(todos) {
+            if (!todos || todos.length === 0) {
+                todosListElement.innerHTML = '<div class="todo-item">Aucune tâche</div>';
+                return;
+            }
+            
+            todosListElement.innerHTML = todos.map(todo => `
+                <div class="todo-item">
+                    <div class="todo-info">
+                        <div class="todo-id">#${todo.id}</div>
+                        <div class="todo-title">${todo.title}</div>
+                        <div class="${todo.completed ? 'todo-completed' : 'todo-not-completed'}">
+                            ${todo.completed ? '✅ Terminée' : '⏳ En cours'}
+                        </div>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="action-btn put-btn" onclick="setTodoId(${todo.id})">Modifier</button>
+                        <button class="action-btn delete-btn" onclick="confirmDelete(${todo.id})">Supprimer</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Remplir automatiquement l'ID
+        function setTodoId(id) {
+            document.getElementById('todoId').value = id;
+            showUpdateForm();
+        }
+        
+        // Confirmer la suppression
+        async function confirmDelete(id) {
+            if (!confirm(`Voulez-vous vraiment supprimer la tâche #${id} ?`)) {
+                return;
+            }
+            
+            try {
+                showLoading();
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                displayResult(data);
+                fetchTodos();
+                getTodoCount();
+            } catch (error) {
+                displayResult({ error: error.message }, true);
+            }
+        }
+        
+        // Afficher le résultat
         function displayResult(data, isError = false) {
             resultElement.innerHTML = isError 
                 ? `<span style="color: #dc3545">❌ Erreur:</span>\n${JSON.stringify(data, null, 2)}`
                 : `<span style="color: #28a745">✅ Succès:</span>\n${JSON.stringify(data, null, 2)}`;
         }
         
+        // Afficher le chargement
         function showLoading() {
             resultElement.innerHTML = '<span style="color: #6c757d">⏳ Chargement...</span>';
         }
-        
-        // Charger les tâches au démarrage
-        fetchTodos();
     </script>
 </body>
 </html>
